@@ -1,5 +1,6 @@
+start:
 ; set slow clock speed
-MOV R0,0b0101
+MOV R0,0b0100
 MOV [0b1111:0b0001],R0
 
 ; Show page 2
@@ -19,7 +20,6 @@ MOV [R1:R2],R0
 
 ; set up timer
 
-start:
 MOV R8,0b0010 ; Start timer at max-1
 
 ; check timer for creation frame
@@ -27,7 +27,14 @@ loop:
 INC R8
 MOV R0,R8
 CP R0,0b0011  ; Compare counter to 3
-SKIP NZ,3 ; Skip next 3 lines if R0 < 3
+SKIP Z,2 ; Skip next 3 lines if R0 < 3
+GOTO frames
+
+  ; check for full hourglass
+  MOV R0,[R1:R2]
+  BIT R0,1
+  SKIP Z,2
+  GOTO start
 
   ; create grain
   MOV R0,0b0010 ; Use for grain creation
