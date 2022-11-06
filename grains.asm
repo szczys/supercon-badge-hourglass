@@ -59,6 +59,7 @@ frames:
   ; grain found
   INC R2
   MOV R0,[R1:R2]
+  MOV R7,R0 ; Copy to R7 for subroutine access
   ; check below
   BIT R0,1
   SKIP Z,3
@@ -68,7 +69,8 @@ frames:
       ; check below left
       ; move if space
   ; Draw new grain
-  BSET R0,1
+  GOSUB setone
+  MOV R0,R7 ; sub sets result to R7
   MOV [R1:R2],R0
   ; Erase previous grain
   DEC R2
@@ -76,3 +78,28 @@ frames:
   BCLR R0,1
   MOV [R1:R2],R0
   GOTO findgrain
+
+setzero:
+MOV R0,R7
+BSET R0,0
+MOV R7,R0
+RET R0,0
+
+setone:
+MOV R0,R7
+BSET R0,1
+MOV R7,R0
+RET R0,0
+
+settwo:
+MOV R0,R7
+BSET R0,2
+MOV R7,R0
+RET R0,0
+
+setthree:
+MOV R0,R7
+BSET R0,3
+MOV R7,R0
+RET R0,0
+
