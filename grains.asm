@@ -43,13 +43,14 @@ frames:
   MOV R2,0b1111
   ; locate grain in row
   findgrain:
-  ; put R2 zero check here
+  ; check if R2 is zero
   MOV R0,R2
   CP R0,0
   SKIP NZ,2
   GOTO loop
+  ; end zero check
 
-  DEC R2
+  DEC R2 ; dec happens at beginning of loop
   MOV R0,[R1:R2]
   BIT R0,1
   SKIP NZ,2
@@ -57,16 +58,21 @@ frames:
 
   ; grain found
   INC R2
-  MOV [R1:R2],R0
-  BSET R0,1
   MOV R0,[R1:R2]
+  ; check below
+  BIT R0,1
+  SKIP Z,3
   DEC R2
+  GOTO findgrain ; grain below, do nothing
+      ; check below right
+      ; check below left
+      ; move if space
+  ; Draw new grain
+  BSET R0,1
+  MOV [R1:R2],R0
   ; Erase previous grain
+  DEC R2
   MOV R0,[R1:R2]
   BCLR R0,1
   MOV [R1:R2],R0
   GOTO findgrain
-    ; check below
-	; check below right
-	; check below left
-	; move if space
