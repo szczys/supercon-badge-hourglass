@@ -67,6 +67,9 @@ frames:
   BIT R0,0
   SKIP NZ,2
   GOTO availzero
+  BIT R0,2
+  SKIP NZ,2
+  GOTO availtwo
   DEC R2
   GOTO findgrain ; grain below, do nothing
       ; check below right
@@ -79,6 +82,13 @@ frames:
   availone:
   GOSUB setone
   GOTO eraseone
+  availtwo:
+  GOSUB settwo
+  GOTO eraseone
+  availthree:
+  GOSUB setthree
+  GOTO eraseone
+
   ; Erase previous grain
   eraseone:
   DEC R2
