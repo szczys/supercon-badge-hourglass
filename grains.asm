@@ -38,21 +38,19 @@ SKIP C,0b0011 ; Skip next 3 lines if R0 < 3
 
 frames:
   ; iterate from 14..0
-  MOV R2,0b1110
+  ; start from 15. it will dec before starting loop
+  MOV R2,0b1111
   ; locate grain in row
   findgrain:
+  ; put R2 zero check here
+
+  DEC R2
   MOV R0,[R1:R2]
   BIT R0,1
   SKIP NZ,2
-  GOTO nograin
-  GOTO hasgrain
+  GOTO findgrain ; no grain found
 
-  nograin:
-  ; put R2 zero check here
-  DEC R2
-  GOTO findgrain
-
-  hasgrain:
+  ; grain found
   INC R2
   MOV [R1:R2],R0
   BSET R0,1
@@ -62,8 +60,6 @@ frames:
   MOV R0,[R1:R2]
   BCLR R0,1
   MOV [R1:R2],R0
-  ; put R2 zero check here
-  DEC R2
   GOTO findgrain
     ; check below
 	; check below right
