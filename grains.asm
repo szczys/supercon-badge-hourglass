@@ -39,7 +39,7 @@ GOTO frames
   GOTO start
 
   ; create grain
-  MOV R0,0b0010 ; Use for grain creation
+  MOV R0,0b0001 ; Use for grain creation
   MOV [R1:R2],R0
   MOV R8,0b0000 ; Restart timer for next run
 
@@ -72,7 +72,7 @@ frames:
   MOV R0,R6
   CP R0,0
   SKIP NZ, 2
-  GOTO findgrain
+  GOTO check_zero
   CP R0,1
   SKIP NZ, 2
   GOTO check_one
@@ -83,6 +83,41 @@ frames:
   SKIP NZ, 2
   GOTO findgrain
   GOTO findgrain
+
+;;;;;;;;;;;;;;;;;check bit0 loc
+check_zero:
+  MOV R0,[r1:r2]
+  BIT R0,0
+  SKIP NZ,2
+  GOTO findgrain ; no grain found
+
+  ; grain found
+  INC R2
+  MOV R0,[r1:r2]
+  ; check below
+  BIT R0,0
+  SKIP NZ,2
+  GOTO zero_availzero
+;  BIT R0,0
+;  SKIP NZ,2
+;  GOTO one_availzero
+  BIT R0,1
+  SKIP NZ,2
+  GOTO zero_availone
+  DEC R2
+  GOTO findgrain ; grain below, do nothing
+      ; check below right
+      ; check below left
+      ; move if space
+  ; draw new grain
+  zero_availzero:
+  GOSUB setzero
+  GOTO erasezero
+  zero_availone:
+  GOSUB setone
+  GOTO erasezero
+
+;;;;;;;;;;;;;;;;;;;;;;;;end check bit0 loc
 
 ;;;;;;;;;;;;;;;;;check bit1 loc
 check_one:
