@@ -19,13 +19,15 @@ JR [0b1111:0b1101]
 MOV [R1:R2],R0
 
 ; set up timer
-
 MOV R8,0b0010 ; Start timer at max-1
 
-; check timer for creation frame
 loop:
+; set up column tracker
+MOV R6,0b1111 ; Start at min-1
+; increment timer
 INC R8
 MOV R0,R8
+; check timer for creation frame
 CP R0,0b0011  ; Compare counter to 3
 SKIP Z,2 ; Skip next 3 lines if R0 < 3
 GOTO frames
@@ -50,6 +52,11 @@ frames:
   MOV R2,0b1111
   ; locate grain in row
   findgrain:
+  ; Check column tracker
+  MOV R6,R0
+  CP R0,0
+  SKIP Z,2
+  GOTO process_columns
   ; check if R2 is zero
   MOV R0,R2
   CP R0,0
@@ -58,52 +65,132 @@ frames:
   ; end zero check
 
   DEC R2 ; dec happens at beginning of loop
-  MOV R0,[R1:R2]
+
+  process_columns:
+  INC R6;
+  MOV R0,R6
+  CP R0,0
+  SKIP NZ, 2
+  GOTO findgrain
+  CP R0,1
+  SKIP NZ, 2
+  GOTO check_one
+  CP R0,2
+  SKIP NZ, 2
+  GOTO check_two
+  CP R0,3
+  SKIP NZ, 2
+  GOTO findgrain
+  GOTO findgrain
+
+;;;;;;;;;;;;;;;;;check bit1 loc
+check_one:
+  MOV R0,[r1:r2]
   BIT R0,1
   SKIP NZ,2
   GOTO findgrain ; no grain found
 
   ; grain found
   INC R2
-  MOV R0,[R1:R2]
-  MOV R7,R0 ; Copy to R7 for subroutine access
+  MOV R0,[r1:r2]
+  MOV R7,R0 ; copy to r7 for subroutine access
   ; check below
   BIT R0,1
   SKIP NZ,2
-  GOTO availone
+  GOTO one_availone
   BIT R0,0
   SKIP NZ,2
-  GOTO availzero
+  GOTO one_availzero
   BIT R0,2
   SKIP NZ,2
-  GOTO availtwo
+  GOTO one_availtwo
   DEC R2
   GOTO findgrain ; grain below, do nothing
       ; check below right
       ; check below left
       ; move if space
-  ; Draw new grain
-  availzero:
+  ; draw new grain
+  one_availzero:
   GOSUB setzero
   GOTO eraseone
-  availone:
+  one_availone:
   GOSUB setone
   GOTO eraseone
-  availtwo:
+  one_availtwo:
   GOSUB settwo
   GOTO eraseone
-  availthree:
+  one_availthree:
   GOSUB setthree
   GOTO eraseone
 
-  ; Erase previous grain
-  eraseone:
-  DEC R2
-  MOV R0,[R1:R2]
-  BCLR R0,1
-  MOV [R1:R2],R0
-  GOTO findgrain
+;;;;;;;;;;;;;;;;;;;;;;;;end check bit1 loc
 
+;;;;;;;;;;;;;;;;;check bit2 loc
+check_two:
+  MOV R0,[r1:r2]
+  BIT R0,2
+  SKIP NZ,2
+  GOTO findgrain ; no grain found
+
+  ; grain found
+  INC R2
+  MOV R0,[r1:r2]
+  MOV R7,R0 ; copy to r7 for subroutine access
+  ; check below
+  BIT R0,2
+  SKIP NZ,2
+  GOTO two_availtwo
+  BIT R0,1
+  SKIP NZ,2
+  GOTO two_availone
+  BIT R0,3
+  SKIP NZ,2
+  GOTO two_availthree
+  DEC R2
+  GOTO findgrain ; grain below, do nothing
+      ; check below right
+      ; check below left
+      ; move if space
+  ; draw new grain
+  two_availone:
+  GOSUB setone
+  GOTO erasetwo
+  two_availtwo:
+  GOSUB settwo
+  GOTO erasetwo
+  two_availthree:
+  GOSUB setthree
+  GOTO erasetwo
+
+;;;;;;;;;;;;;;;;;;;;;;;;end check bit1 loc
+; Erase previous grain
+erasezero:
+DEC R2
+MOV R0,[R1:R2]
+BCLR R0,0
+MOV [R1:R2],R0
+GOTO findgrain
+
+eraseone:
+DEC R2
+MOV R0,[R1:R2]
+BCLR R0,1
+MOV [R1:R2],R0
+GOTO findgrain
+
+erasetwo:
+DEC R2
+MOV R0,[R1:R2]
+BCLR R0,2
+MOV [R1:R2],R0
+GOTO findgrain
+
+erasethree:
+DEC R2
+MOV R0,[R1:R2]
+BCLR R0,3
+MOV [R1:R2],R0
+GOTO findgrain
 
 setzero:
 BSET R0,0
