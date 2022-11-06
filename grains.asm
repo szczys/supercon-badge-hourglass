@@ -63,16 +63,24 @@ frames:
   ; check below
   BIT R0,1
   SKIP NZ,2
-  GOTO foundone
+  GOTO availone
+  BIT R0,0
+  SKIP NZ,2
+  GOTO availzero
   DEC R2
   GOTO findgrain ; grain below, do nothing
       ; check below right
       ; check below left
       ; move if space
   ; Draw new grain
-  foundone:
+  availzero:
+  GOSUB setzero
+  GOTO eraseone
+  availone:
   GOSUB setone
+  GOTO eraseone
   ; Erase previous grain
+  eraseone:
   DEC R2
   MOV R0,[R1:R2]
   BCLR R0,1
