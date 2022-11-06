@@ -1,5 +1,5 @@
 ; set slow clock speed
-MOV R0,0b1000
+MOV R0,0b0101
 MOV [0b1111:0b0001],R0
 
 ; Show page 2
@@ -64,7 +64,7 @@ frames:
   MOV [R1:R2],R0
   ; put R2 zero check here
   DEC R2
-  GOTO frames
+  GOTO findgrain
     ; check below
 	; check below right
 	; check below left
