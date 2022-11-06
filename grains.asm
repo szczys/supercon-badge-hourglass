@@ -16,6 +16,7 @@ MOV [R1:R2],R0
 ; set up timer
 start:
 MOV R0,0b0011 ; Start timer at max
+MOV R8,R0 ; Keep timer in R8
 
 ; check timer for creation frame
 loop:
@@ -30,13 +31,33 @@ SKIP C,0b0011 ; Skip next 3 lines if R0 < 3
 
 ; service movement frames
 
-INC R0
-GOTO loop
-
+frames:
   ; iterate from 14..0
+  MOV R2,0b1110
   ; locate grain in row
+  MOV R0,[R1:R2]
+  BIT R0,1
+  SKIP NZ,2
+  ; put R2 zero check here
+  DEC R2
+  JR -5
+
+  INC R2
+  MOV [R1:R2],R0
+  BSET R0,1
+  MOV R0,[R1:R2]
+  DEC R2
+  ; Erase previous grain
+  MOV R0,[R1:R2]
+  BCLR R0,1
+  MOV [R1:R2],R0
+  ; put R2 zero check here
+  DEC R2
+  GOTO frames
     ; check below
 	; check below right
 	; check below left
 	; move if space
 
+INC R0
+GOTO loop
