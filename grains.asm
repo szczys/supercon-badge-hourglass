@@ -15,7 +15,8 @@
 
 start:
 ; set slow clock speed
-MOV R0,0b0100
+MOV R0,0b0010 ; fast
+; MOV R0,0b0100 ; slow
 MOV [0b1111:0b0001],R0
 
 ; Show page 2
@@ -44,8 +45,9 @@ DEC R1
 MOV R8,0b0010 ; Start timer at max-1
 
 loop:
-; Reset the upper page nibble
+; Reset the upper and lower page nibbles
 MOV R1,2
+MOV R2,0
 
 ; set up column tracker
 MOV R6,0b1111 ; Start at min-1
@@ -53,41 +55,33 @@ MOV R6,0b1111 ; Start at min-1
 INC R8
 MOV R0,R8
 ; check timer for creation frame
-CP R0,0b0011  ; Compare counter to 3
-SKIP Z,2 ; Skip next 3 lines if R0 == 3
-GOTO frames
+CP R0,3  ; Compare counter to 3
+SKIP Z,2
+GOTO startatbottom ; Counter is not three so don't create grains
 
-  ; check for full hourglass
-  ;   this will restart the app when the display is full, but only when the
-  ;   grain being created is on lower page, bit 3
-  ;   FIXME: make grain generation location and rate variable
-  ;          physics for this work, but the creation/restart logic doesn't
-  MOV R0,[R1:R2]
-  BIT R0,3
-  SKIP Z,2
-  GOTO start
+; Counter is 3, create grains if room
+; check for full hourglass
+;   this will restart the app when the display is full, but only when the
+;   grain being created is on lower page, bit 3
+;   FIXME: make grain generation location and rate variable
+;          physics for this work, but the creation/restart logic doesn't
+MOV R0,[R1:R2]
+BIT R0,3
+SKIP Z,2
+GOTO start
 
-  ; create grain
-  MOV R0,0b1000
-  MOV [R1:R2],R0
-  ; Restart timer for next run
-  MOV R8,0b0000
+GOSUB creategrains
+MOV R8,0b0000 ; Restart timer for next run
 
-; FIXME: testing to create grain on second page
-;        this won't be checked for a full display
-;  INC R1
-;  MOV R0,0b0100
-;  MOV [R1:R2],R0
-;  DEC R1
-
+startatbottom:
+MOV R2,0b1110 ; Second from bottom row is the first row that has space below it
+              ; for grains to fall)
 
 ; service movement frames
-frames:
-  ; iterate from 14..0
-  ; start from 15. it will dec before starting loop
-  MOV R2,0b1110
-  ; locate grain in row
-  findgrain:
+; iterate from 14..0
+; start from 15. it will dec before starting loop
+; locate grain in row
+findgrain:
   ; Check column tracker
   MOV R0,R6
   CP R0,3 ; When R6==bit3, we're done scanning
@@ -95,25 +89,21 @@ frames:
   GOTO process_columns ; Keep iterating columns
   MOV R6,0b1111 ; Restart column tracker
 
-  ; check if R2 is zero
-  MOV R0,R2
-  CP R0,0
-  SKIP Z,2
-  GOTO continueframes ; R2 is not zero, keep checking rows
-
-  ; R2 is zero. Check if we need to increment pages
+  ; page switch here
   MOV R0,R1
   CP R0,2
-  SKIP Z,2
-  GOTO loop ; Both pages are done, start the loop anew
+  SKIP NZ,3
+  INC R1 ; Now process upper page
+  GOTO process_columns ; Keep iterating on upper page
+  MOV R1,2 ; Reset for lower page
 
-  ; Lower page is finished so run again for upper page
-  INC R1
-  MOV R2,0b1111
-  ; end zero check
+  ; check if R2 is zero (we've complete all rows)
+  MOV R0,R2
+  CP R0,0
+  SKIP NZ,2
+  GOTO loop ; We've done all rows, start anew
 
-  continueframes:
-  DEC R2 ; dec happens at beginning of loop
+  DEC R2 ; More rows remain so dec and continue checking grains
 
   process_columns:
   INC R6;
@@ -146,14 +136,12 @@ check_zero:
   BIT R0,0
   SKIP NZ,2
   GOTO zero_availzero
-;  BIT R0,0
-;  SKIP NZ,2
-;  GOTO one_availzero
+  ; check below left
   BIT R0,1
   SKIP NZ,2
   GOTO zero_availone
 
-  ;Check if left page
+  ;Check if we're in the left page
   MOV R0,R1
   CP R0,3
   SKIP Z,3
@@ -359,3 +347,16 @@ BSET R0,3
 MOV [R1:R2],R0
 RET R0,0
 
+creategrains:
+; create grain
+MOV R0,0b1000
+MOV [R1:R2],R0
+
+; FIXME: testing to create grain on second page
+;        this won't be checked for a full display
+;  INC R1
+;  MOV R0,0b0100
+;  MOV [R1:R2],R0
+;  DEC R1
+
+RET R0,0
