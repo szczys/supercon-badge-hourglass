@@ -14,63 +14,25 @@
 ; R8 = loop counter (create bit every 3 loops)
 
 start:
-; set slow clock speed
-MOV R0,0b0010 ; fast
-; MOV R0,0b0100 ; slow
-MOV [0b1111:0b0001],R0
-
-; Show page 2
-MOV R0,0b0010
-MOV [0b1111:0b0000],R0
-
-; clear memory
-MOV R0,0b0000 ; zeros to copy to registers
-MOV R1,0b0010 ; upper nibble address
-MOV R2,0b1111 ; lower nibble address
-
-; clear page 2
-MOV [R1:R2],R0
-DSZ R2
-JR [0b1111:0b1101]
-MOV [R1:R2],R0
-; clear page 3
-INC R1
-MOV [R1:R2],R0
-DSZ R2
-JR [0b1111:0b1101]
-MOV [R1:R2],R0
-DEC R1
-
-; set up timer
-MOV R8,0b0010 ; Start timer at max-1
+GOSUB setup
 
 loop:
-; Reset the upper and lower page nibbles
-MOV R1,2
-MOV R2,0
+GOSUB reset_loop_vars
 
-; set up column tracker
-MOV R6,0b1111 ; Start at min-1
-; increment timer
-INC R8
-MOV R0,R8
 ; check timer for creation frame
+MOV R0,R8
 CP R0,3  ; Compare counter to 3
 SKIP Z,2
-GOTO startatbottom ; Counter is not three so don't create grains
+  GOTO startatbottom ; Counter is not three so don't create grains
 
-; Counter is 3, create grains if room
-; check for full hourglass
-;   this will restart the app when the display is full, but only when the
-;   grain being created is on lower page, bit 3
-;   FIXME: make grain generation location and rate variable
-;          physics for this work, but the creation/restart logic doesn't
-MOV R0,[R1:R2]
-BIT R0,3
+; check to see if the screen is full
+GOSUB check_full
+CP R0,0
 SKIP Z,2
-GOTO start
+  GOTO start ; If display is full, start over
 
-GOSUB creategrains
+; add grains to the screen
+GOSUB create_grains
 MOV R8,0b0000 ; Restart timer for next run
 
 startatbottom:
@@ -106,21 +68,39 @@ findgrain:
   DEC R2 ; More rows remain so dec and continue checking grains
 
   process_columns:
-  INC R6;
-  MOV R0,R6
-  CP R0,0
-  SKIP NZ, 2
-  GOTO check_zero
-  CP R0,1
-  SKIP NZ, 2
-  GOTO check_one
-  CP R0,2
-  SKIP NZ, 2
-  GOTO check_two
-  CP R0,3
-  SKIP NZ, 2
-  GOTO check_three
-  GOTO findgrain
+    INC R6;
+    MOV R0,R6
+
+    CP R0,0
+    SKIP NZ, 2
+      GOTO check_zero
+
+    CP R0,1
+    SKIP NZ, 2
+      GOTO check_one
+
+    CP R0,2
+    SKIP NZ, 2
+      GOTO check_two
+
+    CP R0,3
+    SKIP NZ, 2
+      GOTO check_three
+
+    GOTO findgrain
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; This is effectively where program flow ends
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Start of methods for checking columns
+;
+; These methods check the desired grain in the currently selected row. If no
+; grain is found they jump back. If a grain is found, the method will check up
+; to three locations below them and move the grain if space is available
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;check bit0 loc
 check_zero:
@@ -298,6 +278,18 @@ check_three:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;end check bit3 loc
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; End of methods for checking columns
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Start of methods for erasing bits
+;
+; These automatically reset the row to the "currently testing" row, erasing
+; grains that have been moved to a lower row before jumping back to the program
+; flow.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ; Erase previous grain
 erasezero:
 DEC R2
@@ -327,6 +319,17 @@ BCLR R0,3
 MOV [R1:R2],R0
 GOTO findgrain
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; End of methods for erasing bits
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Start of subroutines for settings bits
+;
+; These subroutines can be called from anywhere and are used to set the desired
+; bit in the currently selected row
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 setzero:
 BSET R0,0
 MOV [R1:R2],R0
@@ -347,7 +350,71 @@ BSET R0,3
 MOV [R1:R2],R0
 RET R0,0
 
-creategrains:
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; End of subroutines for settings bits
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Start of subroutines for program flow
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+setup:
+; set slow clock speed
+MOV R0,0b0010 ; fast
+; MOV R0,0b0100 ; slow
+MOV [0b1111:0b0001],R0
+
+; Show page 2
+MOV R0,0b0010
+MOV [0b1111:0b0000],R0
+
+; clear memory
+MOV R0,0b0000 ; zeros to copy to registers
+MOV R1,0b0010 ; upper nibble address
+MOV R2,0b1111 ; lower nibble address
+
+; clear page 2
+MOV [R1:R2],R0
+DSZ R2
+JR [0b1111:0b1101]
+MOV [R1:R2],R0
+; clear page 3
+INC R1
+MOV [R1:R2],R0
+DSZ R2
+JR [0b1111:0b1101]
+MOV [R1:R2],R0
+DEC R1
+
+; set up timer
+MOV R8,0b0010 ; Start timer at max-1
+ret R0,0
+
+reset_loop_vars:
+; Reset the upper and lower page nibbles
+MOV R1,2
+MOV R2,0
+
+; set up column tracker
+MOV R6,0b1111 ; Start at min-1
+; increment timer
+INC R8
+RET R0,0
+
+check_full:
+; Counter is 3, create grains if room
+; check for full hourglass
+;   this will restart the app when the display is full, but only when the
+;   grain being created is on lower page, bit 3
+;   FIXME: make grain generation location and rate variable
+;          physics for this work, but the creation/restart logic doesn't
+MOV R0,[R1:R2]
+BIT R0,3
+SKIP Z,1
+RET R0,1
+RET R0,0
+
+create_grains:
 ; create grain
 MOV R0,0b1000
 MOV [R1:R2],R0
@@ -360,3 +427,8 @@ MOV [R1:R2],R0
 ;  DEC R1
 
 RET R0,0
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; End of subroutines for program flow
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
