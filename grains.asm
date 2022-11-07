@@ -14,35 +14,32 @@
 ; R8 = loop counter (create bit every 3 loops)
 
 start:
-GOSUB setup
+  GOSUB setup
 
 loop:
-GOSUB reset_loop_vars
+  GOSUB reset_loop_vars
 
-; check timer for creation frame
-MOV R0,R8
-CP R0,3  ; Compare counter to 3
-SKIP Z,2
-  GOTO startatbottom ; Counter is not three so don't create grains
+  ; check timer for creation frame
+  MOV R0,R8
+  CP R0,3  ; Compare counter to 3
+  SKIP Z,2
+    GOTO startatbottom ; Counter is not three so don't create grains
 
-; check to see if the screen is full
-GOSUB check_full
-CP R0,0
-SKIP Z,2
-  GOTO start ; If display is full, start over
+  ; check to see if the screen is full
+  GOSUB check_full
+  CP R0,0
+  SKIP Z,2
+    GOTO start ; If display is full, start over
 
-; add grains to the screen
-GOSUB create_grains
-MOV R8,0b0000 ; Restart timer for next run
+  ; add grains to the screen
+  GOSUB create_grains
+  MOV R8,0b0000 ; Restart timer for next run
 
 startatbottom:
-MOV R2,0b1110 ; Second from bottom row is the first row that has space below it
-              ; for grains to fall)
+  ; iterate from 14..0
+  MOV R2,0b1110 ; Second from bottom row is the first row that has space below it
+                ; for grains to fall)
 
-; service movement frames
-; iterate from 14..0
-; start from 15. it will dec before starting loop
-; locate grain in row
 findgrain:
   ; Check column tracker
   MOV R0,R6
@@ -177,17 +174,17 @@ check_one:
 
   ; draw new grain, erase old
   one_availzero:
-  GOSUB setzero
-  GOTO eraseone
+    GOSUB setzero
+    GOTO eraseone
   one_availone:
-  GOSUB setone
-  GOTO eraseone
+    GOSUB setone
+    GOTO eraseone
   one_availtwo:
-  GOSUB settwo
-  GOTO eraseone
+    GOSUB settwo
+    GOTO eraseone
   one_availthree:
-  GOSUB setthree
-  GOTO eraseone
+    GOSUB setthree
+    GOTO eraseone
 
 ;;;;;;;;;;;;;;;;;;;;;;;;end check bit1 loc
 
@@ -217,14 +214,14 @@ check_two:
 
   ; draw new grain, erase old
   two_availone:
-  GOSUB setone
-  GOTO erasetwo
+    GOSUB setone
+    GOTO erasetwo
   two_availtwo:
-  GOSUB settwo
-  GOTO erasetwo
+    GOSUB settwo
+    GOTO erasetwo
   two_availthree:
-  GOSUB setthree
-  GOTO erasetwo
+    GOSUB setthree
+    GOTO erasetwo
 
 ;;;;;;;;;;;;;;;;;;;;;;;;end check bit1 loc
 
@@ -270,11 +267,11 @@ check_three:
 
   ; draw new grain, erase old
   three_availtwo:
-  GOSUB settwo
-  GOTO erasethree
+    GOSUB settwo
+    GOTO erasethree
   three_availthree:
-  GOSUB setthree
-  GOTO erasethree
+    GOSUB setthree
+    GOTO erasethree
 
 ;;;;;;;;;;;;;;;;;;;;;;;;end check bit3 loc
 
@@ -292,32 +289,32 @@ check_three:
 
 ; Erase previous grain
 erasezero:
-DEC R2
-MOV R0,[R1:R2]
-BCLR R0,0
-MOV [R1:R2],R0
-GOTO findgrain
+  DEC R2
+  MOV R0,[R1:R2]
+  BCLR R0,0
+  MOV [R1:R2],R0
+  GOTO findgrain
 
 eraseone:
-DEC R2
-MOV R0,[R1:R2]
-BCLR R0,1
-MOV [R1:R2],R0
-GOTO findgrain
+  DEC R2
+  MOV R0,[R1:R2]
+  BCLR R0,1
+  MOV [R1:R2],R0
+  GOTO findgrain
 
 erasetwo:
-DEC R2
-MOV R0,[R1:R2]
-BCLR R0,2
-MOV [R1:R2],R0
-GOTO findgrain
+  DEC R2
+  MOV R0,[R1:R2]
+  BCLR R0,2
+  MOV [R1:R2],R0
+  GOTO findgrain
 
 erasethree:
-DEC R2
-MOV R0,[R1:R2]
-BCLR R0,3
-MOV [R1:R2],R0
-GOTO findgrain
+  DEC R2
+  MOV R0,[R1:R2]
+  BCLR R0,3
+  MOV [R1:R2],R0
+  GOTO findgrain
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; End of methods for erasing bits
@@ -331,24 +328,24 @@ GOTO findgrain
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 setzero:
-BSET R0,0
-MOV [R1:R2],R0
-RET R0,0
+  BSET R0,0
+  MOV [R1:R2],R0
+  RET R0,0
 
 setone:
-BSET R0,1
-MOV [R1:R2],R0
-RET R0,0
+  BSET R0,1
+  MOV [R1:R2],R0
+  RET R0,0
 
 settwo:
-BSET R0,2
-MOV [R1:R2],R0
-RET R0,0
+  BSET R0,2
+  MOV [R1:R2],R0
+  RET R0,0
 
 setthree:
-BSET R0,3
-MOV [R1:R2],R0
-RET R0,0
+  BSET R0,3
+  MOV [R1:R2],R0
+  RET R0,0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; End of subroutines for settings bits
@@ -359,73 +356,72 @@ RET R0,0
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 setup:
-; set slow clock speed
-MOV R0,0b0010 ; fast
-; MOV R0,0b0100 ; slow
-MOV [0b1111:0b0001],R0
+  ; set slow clock speed
+  MOV R0,0b0010 ; fast
+  ; MOV R0,0b0100 ; slow
+  MOV [0b1111:0b0001],R0
 
-; Show page 2
-MOV R0,0b0010
-MOV [0b1111:0b0000],R0
+  ; Show page 2
+  MOV R0,0b0010
+  MOV [0b1111:0b0000],R0
 
-; clear memory
-MOV R0,0b0000 ; zeros to copy to registers
-MOV R1,0b0010 ; upper nibble address
-MOV R2,0b1111 ; lower nibble address
+  ; clear memory
+  MOV R0,0b0000 ; zeros to copy to registers
+  MOV R1,0b0010 ; upper nibble address
+  MOV R2,0b1111 ; lower nibble address
 
-; clear page 2
-MOV [R1:R2],R0
-DSZ R2
-JR [0b1111:0b1101]
-MOV [R1:R2],R0
-; clear page 3
-INC R1
-MOV [R1:R2],R0
-DSZ R2
-JR [0b1111:0b1101]
-MOV [R1:R2],R0
-DEC R1
+  ; clear page 2
+  MOV [R1:R2],R0
+  DSZ R2
+  JR [0b1111:0b1101]
+  MOV [R1:R2],R0
+  ; clear page 3
+  INC R1
+  MOV [R1:R2],R0
+  DSZ R2
+  JR [0b1111:0b1101]
+  MOV [R1:R2],R0
+  DEC R1
 
-; set up timer
-MOV R8,0b0010 ; Start timer at max-1
-ret R0,0
+  ; set up timer
+  MOV R8,0b0010 ; Start timer at max-1
+RET R0,0
 
 reset_loop_vars:
-; Reset the upper and lower page nibbles
-MOV R1,2
-MOV R2,0
+  ; Reset the upper and lower page nibbles
+  MOV R1,2
+  MOV R2,0
 
-; set up column tracker
-MOV R6,0b1111 ; Start at min-1
-; increment timer
-INC R8
+  ; set up column tracker
+  MOV R6,0b1111 ; Start at min-1
+  ; increment timer
+  INC R8
 RET R0,0
 
 check_full:
-; Counter is 3, create grains if room
-; check for full hourglass
-;   this will restart the app when the display is full, but only when the
-;   grain being created is on lower page, bit 3
-;   FIXME: make grain generation location and rate variable
-;          physics for this work, but the creation/restart logic doesn't
-MOV R0,[R1:R2]
-BIT R0,3
-SKIP Z,1
-RET R0,1
+  ; Counter is 3, create grains if room
+  ; check for full hourglass
+  ;   this will restart the app when the display is full, but only when the
+  ;   grain being created is on lower page, bit 3
+  ;   FIXME: make grain generation location and rate variable
+  ;          physics for this work, but the creation/restart logic doesn't
+  MOV R0,[R1:R2]
+  BIT R0,3
+  SKIP Z,1
+    RET R0,1
 RET R0,0
 
 create_grains:
-; create grain
-MOV R0,0b1000
-MOV [R1:R2],R0
+  ; create grain
+  MOV R0,0b1000
+  MOV [R1:R2],R0
 
-; FIXME: testing to create grain on second page
-;        this won't be checked for a full display
-;  INC R1
-;  MOV R0,0b0100
-;  MOV [R1:R2],R0
-;  DEC R1
-
+  ; FIXME: testing to create grain on second page
+  ;        this won't be checked for a full display
+  ;  INC R1
+  ;  MOV R0,0b0100
+  ;  MOV [R1:R2],R0
+  ;  DEC R1
 RET R0,0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
