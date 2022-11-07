@@ -43,20 +43,20 @@ GOTO frames
 
   ; check for full hourglass
   MOV R0,[R1:R2]
-  BIT R0,1
+  BIT R0,3
   SKIP Z,2
   GOTO start
 
   ; create grain
-  MOV R0,0b0010 ; Use for grain creation
+  MOV R0,0b1000 ; Use for grain creation
   MOV [R1:R2],R0
   MOV R8,0b0000 ; Restart timer for next run
 
   ; FIXME: create grain on second page
-  INC R1
-  MOV R0,0b0100
-  MOV [R1:R2],R0
-  DEC R1
+;  INC R1
+;  MOV R0,0b0100
+;  MOV [R1:R2],R0
+;  DEC R1
 
 
 ; service movement frames
@@ -242,7 +242,21 @@ check_three:
   SKIP NZ,2
   GOTO three_availtwo
   DEC R2
+  ;Check if right page
+  MOV R0,R1
+  CP R0,2
+  SKIP Z,2
   GOTO findgrain ; grain below, do nothing
+
+  INC R1
+  MOV R0,[R1:R2]
+  BIT R0,0
+  SKIP Z,3
+  DEC R1
+  GOTO findgrain
+  GOSUB setzero
+  DEC R1
+  GOTO erasethree
       ; check below right
       ; check below left
       ; move if space
