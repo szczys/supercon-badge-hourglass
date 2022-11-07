@@ -17,11 +17,20 @@ MOV [R1:R2],R0
 DSZ R2
 JR [0b1111:0b1101]
 MOV [R1:R2],R0
+INC R1
+MOV [R1:R2],R0
+DSZ R2
+JR [0b1111:0b1101]
+MOV [R1:R2],R0
+DEC R1
 
 ; set up timer
 MOV R8,0b0010 ; Start timer at max-1
 
 loop:
+; Reset the upper page nibble
+MOV R1,2
+
 ; set up column tracker
 MOV R6,0b1111 ; Start at min-1
 ; increment timer
@@ -39,9 +48,15 @@ GOTO frames
   GOTO start
 
   ; create grain
-  MOV R0,0b1000 ; Use for grain creation
+  MOV R0,0b0010 ; Use for grain creation
   MOV [R1:R2],R0
   MOV R8,0b0000 ; Restart timer for next run
+
+  ; FIXME: create grain on second page
+  INC R1
+  MOV R0,0b0100
+  MOV [R1:R2],R0
+  DEC R1
 
 
 ; service movement frames
@@ -61,10 +76,17 @@ frames:
   ; check if R2 is zero
   MOV R0,R2
   CP R0,0
-  SKIP NZ,2
+  SKIP Z,2
+  GOTO continueframes
+  MOV R0,R1
+  CP R0,2
+  SKIP Z,2
   GOTO loop
+  INC R1
+  MOV R2,0b1111
   ; end zero check
 
+  continueframes:
   DEC R2 ; dec happens at beginning of loop
 
   process_columns:
