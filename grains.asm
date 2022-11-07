@@ -39,7 +39,7 @@ GOTO frames
   GOTO start
 
   ; create grain
-  MOV R0,0b0001 ; Use for grain creation
+  MOV R0,0b1000 ; Use for grain creation
   MOV [R1:R2],R0
   MOV R8,0b0000 ; Restart timer for next run
 
@@ -54,7 +54,7 @@ frames:
   findgrain:
   ; Check column tracker
   MOV R0,R6
-  CP R0,2 ; When this==max_columns, we're done scanning
+  CP R0,3 ; When this==max_columns, we're done scanning
   SKIP Z,2
   GOTO process_columns
   MOV R6,0b1111
@@ -81,7 +81,7 @@ frames:
   GOTO check_two
   CP R0,3
   SKIP NZ, 2
-  GOTO findgrain
+  GOTO check_three
   GOTO findgrain
 
 ;;;;;;;;;;;;;;;;;check bit0 loc
@@ -198,6 +198,42 @@ check_two:
   GOTO erasetwo
 
 ;;;;;;;;;;;;;;;;;;;;;;;;end check bit1 loc
+
+;;;;;;;;;;;;;;;;;check bit3 loc
+check_three:
+  MOV R0,[r1:r2]
+  BIT R0,3
+  SKIP NZ,2
+  GOTO findgrain ; no grain found
+
+  ; grain found
+  INC R2
+  MOV R0,[r1:r2]
+  ; check below
+  BIT R0,3
+  SKIP NZ,2
+  GOTO three_availthree
+;  BIT R0,0
+;  SKIP NZ,2
+;  GOTO one_availzero
+  BIT R0,2
+  SKIP NZ,2
+  GOTO three_availtwo
+  DEC R2
+  GOTO findgrain ; grain below, do nothing
+      ; check below right
+      ; check below left
+      ; move if space
+  ; draw new grain
+  three_availtwo:
+  GOSUB settwo
+  GOTO erasethree
+  three_availthree:
+  GOSUB setthree
+  GOTO erasethree
+
+;;;;;;;;;;;;;;;;;;;;;;;;end check bit3 loc
+
 ; Erase previous grain
 erasezero:
 DEC R2
